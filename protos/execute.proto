@@ -1,0 +1,23 @@
+// 指定的当前proto语法的版本，有2和3
+syntax = "proto3";
+option go_package="../execute"; //以 --go_out= 的目录为基准
+
+// 指定等会文件生成出来的package
+package execute;
+
+// 定义request model
+message Command {
+    string str_command = 1;
+    bool use_console = 2;
+}
+
+// 定义response model
+message ExecuteResult {
+    string hasFinished = 1;
+}
+
+// 定义服务主体
+service ExecuteService {
+    //发送任务，返回执行结果
+    rpc Execute (Command) returns (ExecuteResult) {}
+}
