@@ -23,7 +23,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ExecuteServiceClient interface {
 	// 发送任务，返回执行结果
-	Execute(ctx context.Context, in *Command, opts ...grpc.CallOption) (*ExecuteResult, error)
+	Execute(ctx context.Context, in *ExecutionTask, opts ...grpc.CallOption) (*ExecuteResult, error)
 }
 
 type executeServiceClient struct {
@@ -34,7 +34,7 @@ func NewExecuteServiceClient(cc grpc.ClientConnInterface) ExecuteServiceClient {
 	return &executeServiceClient{cc}
 }
 
-func (c *executeServiceClient) Execute(ctx context.Context, in *Command, opts ...grpc.CallOption) (*ExecuteResult, error) {
+func (c *executeServiceClient) Execute(ctx context.Context, in *ExecutionTask, opts ...grpc.CallOption) (*ExecuteResult, error) {
 	out := new(ExecuteResult)
 	err := c.cc.Invoke(ctx, "/execute.ExecuteService/Execute", in, out, opts...)
 	if err != nil {
@@ -48,7 +48,7 @@ func (c *executeServiceClient) Execute(ctx context.Context, in *Command, opts ..
 // for forward compatibility
 type ExecuteServiceServer interface {
 	// 发送任务，返回执行结果
-	Execute(context.Context, *Command) (*ExecuteResult, error)
+	Execute(context.Context, *ExecutionTask) (*ExecuteResult, error)
 	mustEmbedUnimplementedExecuteServiceServer()
 }
 
@@ -56,7 +56,7 @@ type ExecuteServiceServer interface {
 type UnimplementedExecuteServiceServer struct {
 }
 
-func (UnimplementedExecuteServiceServer) Execute(context.Context, *Command) (*ExecuteResult, error) {
+func (UnimplementedExecuteServiceServer) Execute(context.Context, *ExecutionTask) (*ExecuteResult, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Execute not implemented")
 }
 func (UnimplementedExecuteServiceServer) mustEmbedUnimplementedExecuteServiceServer() {}
@@ -73,7 +73,7 @@ func RegisterExecuteServiceServer(s grpc.ServiceRegistrar, srv ExecuteServiceSer
 }
 
 func _ExecuteService_Execute_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Command)
+	in := new(ExecutionTask)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -85,7 +85,7 @@ func _ExecuteService_Execute_Handler(srv interface{}, ctx context.Context, dec f
 		FullMethod: "/execute.ExecuteService/Execute",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ExecuteServiceServer).Execute(ctx, req.(*Command))
+		return srv.(ExecuteServiceServer).Execute(ctx, req.(*ExecutionTask))
 	}
 	return interceptor(ctx, in, info, handler)
 }

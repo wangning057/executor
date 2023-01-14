@@ -6,18 +6,19 @@ option go_package="../execute"; //以 --go_out= 的目录为基准
 package execute;
 
 // 定义request model
-message Command {
-    string str_command = 1;
-    bool use_console = 2;
+message ExecutionTask {
+    string action_id = 1;
+    string command = 2;
+    bool use_console = 3;
 }
 
 // 定义response model
 message ExecuteResult {
-    string hasFinished = 1;
+    string signal = 1;
 }
 
 // 定义服务主体
 service ExecuteService {
     //发送任务，返回执行结果
-    rpc Execute (Command) returns (ExecuteResult) {}
+    rpc Execute (ExecutionTask) returns (ExecuteResult) {}
 }
