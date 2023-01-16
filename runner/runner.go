@@ -73,20 +73,19 @@ func (c *CmdRunner) exeTask(newTask *execute.ExecutionTask) error {
 		log.Fatalf("修改任务%+v在redis中的状态失败", taskId)
 	}
 
+	returner.InitChan(taskId) //任务加入map
+
 	if oldStatus != "ready" {
 		//略过该条任务
 		//直接返回nil代表指令未执行 //这里不对了，应该是不需要通过channel返回
-		return nil
+		err1 := returner.SetRes(taskId, nil)
+		return err1
 	} else {
 		//执行该条任务，初始化map中对应的channel
-		returner.InitChan(taskId)
-
 		ctx := context.Background()
 		res := c.RunTask(ctx, newTask)
-
 		//任务执行结束，将结果返回到 map 中的对应的channel中
 		err2 := returner.SetRes(taskId, res)
-
 		return err2
 	}
 }
