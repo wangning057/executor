@@ -2,30 +2,16 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net"
+	"runtime"
 
-	"github.com/go-redis/redis/v9"
-	"github.com/wangning057/scheduler/service/execute"
+	"github.com/wangning057/executor/pool"
+	q "github.com/wangning057/executor/queue"
+	"github.com/wangning057/executor/returner"
+	"github.com/wangning057/executor/service/execute"
 	"google.golang.org/grpc"
 )
-
-var taskReadyQueue = make(chan string, 1024)
-var onExeCount = 0
-var maxExeCount = 20
-
-// 初始化一个redis客户端工具，以备使用
-var rdb *redis.Client
-
-func init() {
-	fmt.Println("init in main.go")
-	rdb = redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
-		Password: "", // no password set
-		DB:       0,  // use default DB
-	})
-}
 
 type executorServiceServer struct {
 	execute.UnimplementedExecuteServiceServer
@@ -36,30 +22,27 @@ type executorServiceServer struct {
 
 1.到redis中取任务
 2.执行任务
+3.返回结果
 */
-func (e *executorServiceServer) Execute(ctx context.Context, in *execute.ExecutionTask) (*execute.ExecuteResult, error) {
+func (e *executorServiceServer) Execute(ctx context.Context, task *execute.ExecutionTask) (*execute.ExecuteResult, error) {
 	// TODO
-	action_id := in.GetActionId()
-	oldStatus, err := rdb.GetSet(ctx, action_id, "done").Result()
-	if err == redis.Nil {
-		log.Fatalf("任务%+v在redis中不存在", action_id)
-	} else  if err != nil {
-		log.Fatalf("修改任务%+v在redis中的状态失败", action_id)
-	}
-	
-	res := &execute.ExecuteResult{}
-
-	if oldStatus != "ready" {
-		return res, nil
-	} else {
-		 
-	}
-
-
-
+	task_id := task.GetTaskId()
+	q.ReadyQueue <- task
+	res := returner.GetRes(task_id)
+	return res, nil
 }
 
 func main() {
+
+	//获取机器cpu核数
+	cpuCount := runtime.NumCPU()
+
+	//初始化一个runnerPool，并启动
+	runnerPool := &pool.RunnerPool{
+		RunnerCount: cpuCount + 2,
+	}
+	runnerPool.RunnersInitAndRun()
+
 	//相对于scheduler的gRPC服务端
 	server := grpc.NewServer()
 	execute.RegisterExecuteServiceServer(server, &executorServiceServer{})

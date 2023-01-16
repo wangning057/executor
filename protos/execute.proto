@@ -7,14 +7,16 @@ package execute;
 
 // 定义request model
 message ExecutionTask {
-    string action_id = 1;
+    string task_id = 1;
     string command = 2;
     bool use_console = 3;
+    bool IO_busy = 4;
 }
 
 // 定义response model
 message ExecuteResult {
     string signal = 1;
+    string task_id = 2;
 }
 
 // 定义服务主体
