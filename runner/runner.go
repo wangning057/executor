@@ -82,7 +82,7 @@ func (c *CmdRunner) exeTask(newTask *execute.ExecutionTask) error {
 		returner.InitChan(taskId)
 
 		ctx := context.Background()
-		res := RunTask(ctx, newTask)
+		res := c.RunTask(ctx, newTask)
 
 		//任务执行结束，将结果返回到 map 中的对应的channel中
 		err2 := returner.SetRes(taskId, res)
@@ -92,7 +92,7 @@ func (c *CmdRunner) exeTask(newTask *execute.ExecutionTask) error {
 }
 
 // 执行传入的任务 t
-func RunTask(ctx context.Context, t *execute.ExecutionTask) *execute.ExecuteResult {
+func (c *CmdRunner) RunTask(ctx context.Context, t *execute.ExecutionTask) *execute.ExecuteResult {
 	cmd := &cmd_util.Command{
 		Content:     t.GetCommand(),
 		Env:         make([]string, 0),
@@ -129,9 +129,8 @@ func (c *CmdRunner) Execute_Test() {
 		Stderr: &stderr,
 	}
 
-	fmt.Print(c.RunnerId, "测试：")
 	cmd_util.Run(ctx, cmd, WORK_DIR, stdio)
 
-	fmt.Println(c.RunnerId, "测试：", stdio.Stdout)
+	fmt.Println("c.RunnerId:", c.RunnerId, "测试：", stdio.Stdout)
 
 }
