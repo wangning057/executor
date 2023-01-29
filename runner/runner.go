@@ -26,7 +26,7 @@ import (
 */
 
 const (
-	WORK_DIR string = "/home/ubuntu/ninja" //命令的执行目录
+	WORK_DIR string = "/home/ubuntu/aosp_build" //命令的执行目录
 )
 
 // 初始化一个redis客户端工具，以备使用
@@ -35,7 +35,7 @@ var rdb *redis.Client
 func init() {
 	fmt.Println("init in exeFunc.go")
 	rdb = redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
+		Addr:     "172.17.0.45:6379",
 		Password: "", // no password set
 		DB:       0,  // use default DB
 	})
@@ -61,6 +61,7 @@ func (c *CmdRunner) initRunner() {
 
 func (c *CmdRunner) getTask() *execute.ExecutionTask {
 	newTask := <-q.ReadyQueue
+	log.Printf("runner %+v 已经拿到任务\n", c.RunnerId)
 	return newTask
 }
 
