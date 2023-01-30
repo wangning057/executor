@@ -2,6 +2,7 @@ package returner
 
 import (
 	"errors"
+	"log"
 
 	"github.com/wangning057/executor/service/execute"
 )
@@ -30,8 +31,16 @@ func SetRes(task_id string, res *execute.ExecuteResult) error {
 
 func GetRes(task_id string) *execute.ExecuteResult {
 	resChan := resultMap[task_id]
-	res := <-resChan
-	delete(resultMap, task_id)
-	close(resChan)
-	return res
+	if resChan == nil {
+		log.Printf("resChan == nil，无法取到任务id=%v的res\n", task_id)
+	}
+
+	for {
+		select {
+		case res := <-resChan:
+			delete(resultMap, task_id)
+			close(resChan)
+			return res
+		}
+	}
 }

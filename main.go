@@ -25,10 +25,10 @@ type executorServiceServer struct {
 3.返回结果
 */
 func (e *executorServiceServer) Execute(ctx context.Context, task *execute.ExecutionTask) (*execute.ExecuteResult, error) {
-	// TODO
-	task_id := task.GetTaskId()
-	q.ReadyQueue <- task
-	res := returner.GetRes(task_id)
+	taskId := task.GetTaskId()
+	returner.InitChan(taskId) //任务加入map
+	q.ReadyQueue <- task //任务放入队列
+	res := returner.GetRes(taskId)
 	return res, nil
 }
 

@@ -26,7 +26,7 @@ import (
 */
 
 const (
-	WORK_DIR string = "/home/ubuntu/aosp_build" //命令的执行目录
+	WORK_DIR string = "/home/ubuntu/aosp" //命令的执行目录
 )
 
 // 初始化一个redis客户端工具，以备使用
@@ -50,6 +50,7 @@ func (c *CmdRunner) Run() {
 	for {
 		newTask := c.getTask()
 		c.exeTask(newTask)
+		log.Printf("runner id = %v 将task id = %v 执行完毕\n", c.RunnerId, newTask.GetTaskId())
 	}
 }
 
@@ -60,13 +61,19 @@ func (c *CmdRunner) initRunner() {
 }
 
 func (c *CmdRunner) getTask() *execute.ExecutionTask {
-	newTask := <-q.ReadyQueue
-	log.Printf("runner %+v 已经拿到任务\n", c.RunnerId)
-	return newTask
+	for{
+		log.Printf("runner %+v 正在拿任务\n", c.RunnerId)
+		select {
+		case newTask := <-q.ReadyQueue :
+			log.Printf("runner %+v 已经拿到任务 ==> %+v \n", c.RunnerId, newTask)
+			return newTask
+		}
+	}
 }
 
 func (c *CmdRunner) exeTask(newTask *execute.ExecutionTask) error {
 	taskId := newTask.GetTaskId()
+	
 	oldStatus, err := rdb.GetSet(context.Background(), taskId, "done").Result()
 	if err == redis.Nil {
 		log.Fatalf("任务%+v在redis中不存在", taskId)
@@ -74,7 +81,7 @@ func (c *CmdRunner) exeTask(newTask *execute.ExecutionTask) error {
 		log.Fatalf("修改任务%+v在redis中的状态失败", taskId)
 	}
 
-	returner.InitChan(taskId) //任务加入map
+	// returner.InitChan(taskId) //任务加入map
 
 	if oldStatus != "ready" {
 		//略过该条任务
@@ -82,6 +89,7 @@ func (c *CmdRunner) exeTask(newTask *execute.ExecutionTask) error {
 		err1 := returner.SetRes(taskId, nil)
 		return err1
 	} else {
+		fmt.Printf("runner id = %v 正在执行任务 id = %v\n", c.RunnerId, taskId)
 		//执行该条任务，初始化map中对应的channel
 		ctx := context.Background()
 		res := c.RunTask(ctx, newTask)
